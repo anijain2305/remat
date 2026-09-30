@@ -920,7 +920,8 @@ class _SaveOpForwardScratch:
 
 
 def _detach_for_user_hook(tensor: torch.Tensor) -> torch.Tensor:
-    """Detach a saved tensor for a user pack hook, retaining parameter-ness.
+    """Detach a saved tensor for a user pack hook, retaining parameter-ness and
+    Python attributes.
 
     remat hands user saved-tensor hooks a *detached* tensor (same storage/version) so
     an identity pack doesn't close the gc-invisible Node<->payload cycle. But
@@ -931,10 +932,15 @@ def _detach_for_user_hook(tensor: torch.Tensor) -> torch.Tensor:
     activation, offloaded, and races FSDP's reshard-after-forward that frees its
     storage. The re-wrap shares the same storage/version as the detached tensor, so the
     cycle break and FSDP's in-place storage revival on the backward re-gather still hold.
+
+    ``detach()`` also drops attributes set on the tensor object, which hooks read as
+    per-tensor markers (e.g. an attribute that opts a tensor out of offload). They are
+    copied shallowly, so the hook sees what it would see without remat.
     """
     detached = tensor.detach()
     if isinstance(tensor, torch.nn.Parameter):
-        return torch.nn.Parameter(detached, requires_grad=False)
+        detached = torch.nn.Parameter(detached, requires_grad=False)
+    detached.__dict__.update(tensor.__dict__)
     return detached
 
 

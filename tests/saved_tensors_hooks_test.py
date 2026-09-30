@@ -636,6 +636,57 @@ compute block.0.mid [recompute] (recompute)
     @pytest.mark.compile_xfail(
         "remat saved-tensor hooks are unsupported under torch.compile"
     )
+    def test_saved_tensors_hooks_retain_tensor_attributes(self) -> None:
+        # Hooks read attributes set on a saved tensor as per-tensor markers (e.g. an
+        # offload opt-out). The detach remat applies before the user pack hook must not
+        # drop them, for plain activations or re-wrapped parameters.
+        packed_markers: list[object] = []
+
+        def pack(tensor: torch.Tensor) -> object:
+            packed_markers.append(getattr(tensor, "marker", None))
+            return tensor
+
+        def unpack(packed: object) -> torch.Tensor:
+            return cast(torch.Tensor, packed)
+
+        weight = torch.nn.Parameter(torch.randn(3, 3))
+        weight.marker = "weight"
+
+        class Linear(torch.autograd.Function):
+            @staticmethod
+            def forward(
+                ctx: Any, x: torch.Tensor, w: torch.nn.Parameter
+            ) -> torch.Tensor:
+                act = x * 2
+                act.marker = "act"
+                ctx.save_for_backward(act, w)
+                return act @ w.t()
+
+            @staticmethod
+            def backward(
+                ctx: Any, grad_output: torch.Tensor
+            ) -> tuple[torch.Tensor, None]:
+                (act, w) = ctx.saved_tensors
+                del act
+                return (grad_output @ w) * 2, None
+
+        def body(x: torch.Tensor) -> torch.Tensor:
+            def fn(inp: torch.Tensor) -> torch.Tensor:
+                return Linear.apply(inp, weight)
+
+            return remat.region(fn, "linear", recompute=False)(x)
+
+        x = torch.randn(4, 3, requires_grad=True)
+        with remat.saved_tensors_hooks(pack, unpack):
+            y = checkpoint_for_test()(body)(x)
+            y.sum().backward()
+
+        # The native checkpoint-input save carries no marker.
+        self.assertEqual([None, "act", "weight"], packed_markers)
+
+    @pytest.mark.compile_xfail(
+        "remat saved-tensor hooks are unsupported under torch.compile"
+    )
     def test_capture_context_binds_producer_context_for_deferred_output_save(
         self,
     ) -> None:
