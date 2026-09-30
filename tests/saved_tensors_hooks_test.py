@@ -22,7 +22,7 @@ import expecttest
 import pytest
 import torch
 import torch_remat as remat
-from remat_test_helpers import (
+from remat_test_helpers import (  # pyrefly: ignore[missing-import]
     _BulkOffloader,
     _run_bulk_model,
     _run_wedge_model,
@@ -118,6 +118,7 @@ class SavedTensorsHooksTest(expecttest.TestCase):
         )
         self.assertEqual([None, None], contexts)
         self.assertEqual(0, capture_calls[0])
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -157,7 +158,9 @@ class SavedTensorsHooksTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (two_x, y) = ctx.saved_tensors
                 del y
                 return grad_output * two_x
@@ -178,6 +181,7 @@ class SavedTensorsHooksTest(expecttest.TestCase):
         self.assertEqual([remat.SavedTensorKind.BACKWARD] * 2, pack_kinds)
         self.assertEqual(["stashed", "stashed"], unpack_tags)
         # The custom pack/unpack round-trip leaves the gradient unchanged.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -211,7 +215,9 @@ class SavedTensorsHooksTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (two_x, y) = ctx.saved_tensors
                 del y
                 return grad_output * two_x
@@ -231,6 +237,7 @@ class SavedTensorsHooksTest(expecttest.TestCase):
 
         # unpack still ran (bound at pack time) despite no active hook at backward.
         self.assertEqual(["bound", "bound", "bound"], unpack_calls)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -433,7 +440,9 @@ compute block.0.mid [recompute] (recompute)
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (two_x,) = ctx.saved_tensors
                 return grad_output * two_x
 
@@ -463,6 +472,7 @@ compute block.0.mid [recompute] (recompute)
             ],
             unpack_kinds,
         )
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(leaf.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -493,7 +503,9 @@ compute block.0.mid [recompute] (recompute)
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (doubled,) = ctx.saved_tensors
                 return grad_output * doubled
 
@@ -511,6 +523,7 @@ compute block.0.mid [recompute] (recompute)
 
         self.assertEqual(1, outer_packs[0])
         self.assertEqual(1, inner_packs[0])
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -539,7 +552,9 @@ compute block.0.mid [recompute] (recompute)
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (doubled,) = ctx.saved_tensors
                 return grad_output * doubled
 
@@ -554,6 +569,7 @@ compute block.0.mid [recompute] (recompute)
 
         self.assertEqual(0, outer_packs[0])
         self.assertEqual(2, inner_packs[0])
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -593,7 +609,7 @@ compute block.0.mid [recompute] (recompute)
                 return act @ w.t()
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any, grad_output: torch.Tensor
             ) -> tuple[torch.Tensor, None]:
                 (act, w) = ctx.saved_tensors
@@ -669,4 +685,5 @@ compute block.0.mid [recompute] (recompute)
         # save-for-backward tensor, so a policy hook can treat it differently.
         self.assertEqual([remat.SavedTensorKind.SAVE_OUTPUT], packed_kinds)
         # d/dx relu(2x) = 2 where 2x > 0.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0, 0.0])))

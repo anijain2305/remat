@@ -354,7 +354,7 @@ def _walk_graph(
     # fresh node "seen" and skip its whole subgraph (multi-root walks hit this immediately).
     # Keeping the objects pins each node's stable cached wrapper, so identity dedup is correct.
     seen: set[torch.autograd.graph.Node] = set()
-    todo: list[torch.autograd.graph.Node] = [
+    todo: list[torch.autograd.graph.Node | None] = [
         t.grad_fn for t in roots if t.grad_fn is not None
     ]
     while todo:

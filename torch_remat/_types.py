@@ -170,7 +170,7 @@ class _ViewSpec:
 
     size: tuple[int, ...]
     stride: tuple[int, ...]
-    rel_offset: int
+    rel_offset: int | torch.SymInt
     base_shape: tuple[int, ...]
     base_stride: tuple[int, ...]
 
@@ -234,7 +234,7 @@ class _InputInfo:
     dtype: torch.dtype
     shape: tuple[int, ...]
     stride: tuple[int, ...]
-    storage_offset: int
+    storage_offset: int | torch.SymInt
     # Version counter observed at op entry. A saved tensor whose version has moved
     # past this was mutated in place by the op body after entry, so its data is NOT
     # what replay reproduces at op entry -- it must be retained, not diverted to a

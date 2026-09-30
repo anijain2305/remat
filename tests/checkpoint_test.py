@@ -22,7 +22,7 @@ import expecttest
 import pytest
 import torch
 import torch_remat as remat
-from remat_test_helpers import checkpoint_for_test
+from remat_test_helpers import checkpoint_for_test  # pyrefly: ignore[missing-import]
 from torch_remat._recompute_boundary import _checkpoint_recompute_boundary
 from torch_remat._region import _checkpoint_context_fn
 
@@ -130,7 +130,9 @@ op: recompute""",
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (doubled,) = ctx.saved_tensors
                 return grad_output * doubled
 
@@ -148,6 +150,7 @@ op: recompute""",
         self.assertEqual(2, len(unpacked))
         self.assertTrue(torch.equal(unpacked[0], torch.tensor([2.0, 3.0])))
         self.assertTrue(torch.equal(unpacked[1], torch.tensor([4.0, 6.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     def test_checkpoint_options_do_not_collide_with_user_kwargs(self) -> None:
@@ -161,6 +164,7 @@ op: recompute""",
         )
         y.sum().backward()
 
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0])))
 
     def test_nested_checkpoint_regions_are_banned(self) -> None:
@@ -193,7 +197,9 @@ op: recompute""",
                 raise RuntimeError("intentional forward failure")
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output
 
@@ -228,7 +234,9 @@ op: recompute""",
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 
@@ -245,6 +253,7 @@ op: recompute""",
         )(followup_body)(x)
         y.sum().backward()
 
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0])))
 
     @pytest.mark.compile_xfail("compiled regions do not populate collect_trace")
@@ -294,7 +303,9 @@ scope [test_flag]
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 events.append("inner_backward_before_unpack")
                 (x,) = ctx.saved_tensors
                 del x
@@ -349,6 +360,7 @@ inner_backward_after_unpack""",
         self.assertEqual([0], packed_nbytes)
         self.assertEqual([0], unpacked_numels)
         self.assertEqual([0], unpacked_nbytes)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.full_like(x, 3)))
 
     @pytest.mark.compile_xfail("compile uses Dynamo's output pytree handling")
@@ -371,6 +383,7 @@ inner_backward_after_unpack""",
 
         self.assertIs(type(output), TensorTuple)
         output[0].sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.full_like(x, 2)))
 
     def test_checkpoint_boundary_supports_one_hop_builtin_containers(
@@ -386,6 +399,7 @@ inner_backward_after_unpack""",
         loss = output[0].sum() + output[1].sum()
         loss.backward()
 
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0])))
 
     @pytest.mark.compile_xfail("compile uses Dynamo's output pytree handling")
@@ -445,7 +459,7 @@ inner_backward_after_unpack""",
                 return y
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any,
                 grad_output: torch.Tensor,
             ) -> torch.Tensor:
@@ -463,6 +477,7 @@ inner_backward_after_unpack""",
         x = torch.tensor([2.0, 3.0], requires_grad=True)
         y = checkpoint_for_test()(checkpoint_body)(x)
         y.sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
         activation_ref = saved_activation_ref
@@ -480,7 +495,7 @@ inner_backward_after_unpack""",
                 return y
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any,
                 grad_output: torch.Tensor,
             ) -> torch.Tensor:
@@ -498,9 +513,11 @@ inner_backward_after_unpack""",
         x = torch.tensor([2.0, 3.0], requires_grad=True)
         y = checkpoint_for_test()(checkpoint_body)(x)
         y.sum().backward(retain_graph=True)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
         x.grad = None
         y.sum().backward()
 
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))

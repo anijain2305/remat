@@ -20,7 +20,10 @@ import expecttest
 import pytest
 import torch
 import torch_remat as remat
-from remat_test_helpers import checkpoint_for_test, IS_COMPILE_TEST
+from remat_test_helpers import (  # pyrefly: ignore[missing-import]
+    checkpoint_for_test,
+    IS_COMPILE_TEST,
+)
 from torch_remat._api import _MakeNonLeaf
 from torch_remat._region import (
     _checkpoint_context_fn,
@@ -72,7 +75,7 @@ class OpBasicsTest(expecttest.TestCase):
             )
         # name is a required positional; omitting it is a plain TypeError.
         with self.assertRaises(TypeError):
-            remat.region(torch.sin, recompute=True)
+            remat.region(torch.sin, recompute=True)  # pyrefly: ignore[missing-argument]
 
     def test_recompute_false_produces_save_record(self) -> None:
         # A checkpoint region recomputes everything by default; a recompute=False
@@ -102,7 +105,9 @@ class OpBasicsTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 
@@ -119,6 +124,7 @@ class OpBasicsTest(expecttest.TestCase):
 
         if not IS_COMPILE_TEST:
             self.assertEqual(1, FunctionStyleSquare.forward_runs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     def test_recompute_op_reruns_body(self) -> None:
@@ -133,7 +139,9 @@ class OpBasicsTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 
@@ -150,6 +158,7 @@ class OpBasicsTest(expecttest.TestCase):
 
         if not IS_COMPILE_TEST:
             self.assertEqual(2, ReadmeSquare.forward_runs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     def test_recompute_op_supports_none_output(self) -> None:
@@ -181,6 +190,7 @@ class OpBasicsTest(expecttest.TestCase):
         if not IS_COMPILE_TEST:
             self.assertEqual(2, forward_runs)
             self.assertEqual([None, None], seen_optional_outputs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -195,7 +205,9 @@ class OpBasicsTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 
@@ -259,7 +271,9 @@ class OpBasicsTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * ctx.scale * x
 
@@ -276,6 +290,7 @@ class OpBasicsTest(expecttest.TestCase):
             y.sum().backward()
 
         self.assertTrue(torch.equal(y.detach(), torch.tensor([4.0, 9.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
         self.assertEqual([(2,)], packed_shapes)
 
@@ -288,7 +303,9 @@ class OpBasicsTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 
@@ -299,7 +316,9 @@ class OpBasicsTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 

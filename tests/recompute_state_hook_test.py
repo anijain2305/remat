@@ -260,4 +260,5 @@ class PreserveRngStateTest(expecttest.TestCase):
         x = torch.tensor([2.0, 3.0], requires_grad=True)
         out = remat.checkpoint(region_name="m")(body)(x)
         out.sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))

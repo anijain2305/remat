@@ -48,7 +48,9 @@ class _TriggerCheckpointRecompute(torch.autograd.Function):
         return output.view_as(output)
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         # Trigger non-reentrant checkpoint's saved-tensor unpack hook at the
         # user-visible boundary before nested custom backward bodies run.
         (_,) = ctx.saved_tensors
@@ -56,7 +58,7 @@ class _TriggerCheckpointRecompute(torch.autograd.Function):
 
 
 if importlib.util.find_spec("spmd_types") is not None:
-    import spmd_types
+    import spmd_types  # pyrefly: ignore[missing-import]
 
     spmd_types.register_local_autograd_function(_TriggerCheckpointRecompute)
 

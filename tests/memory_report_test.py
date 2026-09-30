@@ -20,7 +20,10 @@ from typing import Any
 import expecttest
 import torch
 import torch_remat as remat
-from remat_test_helpers import _assert_byte_column_sums, assert_no_cycles_from
+from remat_test_helpers import (  # pyrefly: ignore[missing-import]
+    _assert_byte_column_sums,
+    assert_no_cycles_from,
+)
 from torch_remat._region import _checkpoint_context_fn
 from torch_remat._reporting import _addressed_intervals
 
@@ -50,7 +53,9 @@ class MemoryReportTest(expecttest.TestCase):
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -87,7 +92,9 @@ layers.0::producer: 8 B
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y, gf) = ctx.saved_tensors
                 del y
                 return grad_output * gf
@@ -124,7 +131,9 @@ layers.0::sq: 16 B
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (q, k) = ctx.saved_tensors
                 del q, k
                 return grad_output
@@ -158,7 +167,9 @@ layers.0::attn: 96 B
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (v,) = ctx.saved_tensors
                 del v
                 return grad_output
@@ -189,7 +200,9 @@ layers.0::op: 40 B
                 return (x * 2).sum().reshape(1)
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return torch.zeros(2, 12)
 
@@ -222,7 +235,9 @@ layers.0: 0 B resident in 0 storage(s)
                 return a
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (a, av) = ctx.saved_tensors
                 del a, av
                 return grad_output * 2
@@ -258,7 +273,9 @@ blk::op: 16 B
                 return x + 1
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (gf,) = ctx.saved_tensors
                 return grad_output * gf
 
@@ -290,7 +307,9 @@ blk: 0 B resident in 0 storage(s)
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y, gf) = ctx.saved_tensors
                 del y
                 return grad_output * gf
@@ -303,7 +322,9 @@ blk: 0 B resident in 0 storage(s)
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (q, k) = ctx.saved_tensors
                 del q, k
                 return grad_output
@@ -331,7 +352,9 @@ blk: 0 B resident in 0 storage(s)
                 return x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output
 

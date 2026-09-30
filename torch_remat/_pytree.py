@@ -72,7 +72,7 @@ def container_type(value: object) -> type | None:
     return None
 
 
-def rebuild_container(container: type, items: list[object]) -> object:
+def rebuild_container(container: type, items: Sequence[object]) -> object:
     """Build a one-hop ``container`` from already-mapped ``items``.
 
     ``container`` is what :func:`container_type` returned for the original value. A

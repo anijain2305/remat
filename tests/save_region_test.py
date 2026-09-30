@@ -22,7 +22,7 @@ import expecttest
 import pytest
 import torch
 import torch_remat as remat
-from remat_test_helpers import (
+from remat_test_helpers import (  # pyrefly: ignore[missing-import]
     _ref_grad,
     checkpoint_for_test,
     IS_COMPILE_TEST,
@@ -62,7 +62,7 @@ class SaveRegionTest(expecttest.TestCase):
                 return out
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any,
                 grad_output: torch.Tensor,
             ) -> torch.Tensor:
@@ -90,6 +90,7 @@ class SaveRegionTest(expecttest.TestCase):
 
         if not IS_COMPILE_TEST:
             self.assertEqual(1, SavesOutputView.forward_runs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([1.0, 4.0, 9.0, 16.0])))
 
     def test_save_preserves_none_saved_tensor_slots(self) -> None:
@@ -103,7 +104,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return right
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 left, missing, right = ctx.saved_tensors
                 assert missing is None
                 return grad_output * (right - left + 1)
@@ -119,6 +122,7 @@ class SaveRegionTest(expecttest.TestCase):
         y = checkpoint_for_test()(checkpoint_body)(x)
         y.sum().backward()
 
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.full_like(x, 2.0)))
 
     def test_save_op_tuple_output_schema_and_grad(self) -> None:
@@ -140,7 +144,7 @@ class SaveRegionTest(expecttest.TestCase):
                 return left, right
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any,
                 grad_left: torch.Tensor,
                 grad_right: torch.Tensor,
@@ -165,6 +169,7 @@ class SaveRegionTest(expecttest.TestCase):
             self.assertEqual(1, TupleReturn.forward_runs)
         self.assertTrue(torch.equal(left.detach(), torch.tensor([4.0, 9.0])))
         self.assertTrue(torch.equal(right.detach(), torch.tensor([3.0, 4.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 7.0])))
 
     def test_save_op_replays_none_in_original_output_position(self) -> None:
@@ -203,6 +208,7 @@ class SaveRegionTest(expecttest.TestCase):
             self.assertEqual(1, forward_runs)
             self.assertEqual([None, None], seen_optional_outputs)
         self.assertTrue(torch.equal(y.detach(), torch.tensor([7.0, 13.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 7.0])))
 
     def test_skipped_output_view_of_recomputed_tensor_replays_as_zero_storage(
@@ -216,7 +222,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -227,7 +235,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return x[:1]
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return torch.cat([grad_output, torch.zeros_like(grad_output)])
 
@@ -262,7 +272,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -273,7 +285,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return v * v
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (v,) = ctx.saved_tensors
                 return grad_output * 2 * v
 
@@ -285,6 +299,7 @@ class SaveRegionTest(expecttest.TestCase):
         x = torch.tensor([1.0, 2.0], requires_grad=True)
         checkpoint_for_test(region_name="r")(region)(x).sum().backward()
         # d/dx (3x)^2 = 18x
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
 
     @pytest.mark.compile_xfail("remat saved-tensor hooks are unsupported under compile")
@@ -311,7 +326,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -324,7 +341,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return y * y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y, internal) = ctx.saved_tensors
                 del internal
                 return grad_output * 2 * y
@@ -348,6 +367,7 @@ class SaveRegionTest(expecttest.TestCase):
 
         # Only the internal save reached the offloader; the recomputed input did not.
         self.assertEqual(["shape(2,)"], packed)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
 
     def test_named_save_for_backward_round_trips(self) -> None:
@@ -363,7 +383,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 x, missing, z = ctx.saved_tensors
                 assert missing is None
                 if not IS_COMPILE_TEST:
@@ -379,6 +401,7 @@ class SaveRegionTest(expecttest.TestCase):
         y.sum().backward()
         if not IS_COMPILE_TEST:
             self.assertEqual(1, Affine.runs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(lambda t: t * t, base)))
 
     def test_named_save_in_multi_op_span_keys_by_identity(self) -> None:
@@ -394,7 +417,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return c * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 2
 
@@ -409,7 +434,9 @@ class SaveRegionTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (two_x,) = ctx.saved_tensors
                 return grad_output * two_x
 
@@ -438,6 +465,7 @@ blk::span: 12 B
         base = torch.tensor([1.0, 2.0, 3.0], dtype=torch.float64)
         xc = base.clone().requires_grad_(True)
         checkpoint_for_test(region_name="blk")(span)(xc).sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(xc.grad, _ref_grad(lambda t: t * t, base)))
 
     def test_recompute_op_loads_mixed_flat_inputs(self) -> None:
@@ -456,7 +484,9 @@ blk::span: 12 B
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2
 
@@ -473,6 +503,7 @@ blk::span: 12 B
         out.sum().backward()
 
         self.assertTrue(torch.equal(out.detach(), torch.tensor([8.0, 16.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([8.0, 8.0])))
 
     def test_recompute_op_loads_nested_list_input(self) -> None:
@@ -490,7 +521,9 @@ blk::span: 12 B
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 2
 
@@ -509,6 +542,7 @@ blk::span: 12 B
         out.sum().backward()
 
         self.assertTrue(torch.equal(out.detach(), torch.tensor([5.0, 10.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 5.0])))
 
     def test_save_op_returns_list_output(self) -> None:
@@ -534,6 +568,7 @@ blk::span: 12 B
         out.sum().backward()
 
         self.assertTrue(torch.equal(out.detach(), torch.tensor([5.0, 10.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 5.0])))
         if not IS_COMPILE_TEST:
             self.assertEqual(seen_container, [list, list])
@@ -572,6 +607,7 @@ blk::span: 12 B
         out.sum().backward()
 
         self.assertTrue(torch.equal(out.detach(), torch.tensor([5.0, 10.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 5.0])))
         if not IS_COMPILE_TEST:
             self.assertEqual(seen_container, [Pair, Pair])
@@ -608,6 +644,7 @@ blk::span: 12 B
         out.sum().backward()
 
         self.assertTrue(torch.equal(out.detach(), torch.tensor([5.0, 10.0])))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 5.0])))
         # Rebuilt as the structseq type on the original forward and again on recompute,
         # not collapsed to a plain tuple.
@@ -633,6 +670,7 @@ blk::span: 12 B
         x = base.clone().requires_grad_(True)
         y = checkpoint_for_test()(block)(x)
         y.sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(reference, base)))
 
     def test_save_op_with_reshape_in_region_feeds_recompute(self) -> None:
@@ -649,7 +687,7 @@ blk::span: 12 B
                 return q * 2, k * 3
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any, grad_q: torch.Tensor, grad_k: torch.Tensor
             ) -> tuple[torch.Tensor, torch.Tensor]:
                 del ctx
@@ -676,6 +714,7 @@ blk::span: 12 B
 
         x = base.clone().requires_grad_(True)
         checkpoint_for_test(region_name="attn")(attention)(x).backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(attention, base)))
 
     @pytest.mark.compile_xfail("compile does not use remat's eager version guard")
@@ -697,7 +736,9 @@ blk::span: 12 B
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (grad_factor,) = ctx.saved_tensors
                 return grad_output * grad_factor
 
@@ -727,7 +768,9 @@ blk::span: 12 B
                 return x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y,) = ctx.saved_tensors
                 return grad_output * y
 
@@ -739,6 +782,7 @@ blk::span: 12 B
         base = torch.randn(4, dtype=torch.float64)
         x = base.clone().requires_grad_(True)
         checkpoint_for_test(region_name="r")(region)(x).sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(region, base)))
 
     def test_save_op_saves_distinct_object_alias_of_input_is_ferried(self) -> None:
@@ -760,7 +804,9 @@ blk::span: 12 B
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -776,7 +822,9 @@ blk::span: 12 B
                 return y * y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y,) = ctx.saved_tensors
                 return grad_output * 2 * y
 
@@ -801,6 +849,7 @@ blk::span: 12 B
         out.sum().backward()
         if not IS_COMPILE_TEST:
             self.assertEqual(2, Producer.runs)  # recomputed once at backward
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
 
     def test_save_op_saves_slice_views_of_recomputed_input_is_ferried(self) -> None:
@@ -821,7 +870,9 @@ blk::span: 12 B
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -837,7 +888,9 @@ blk::span: 12 B
                 return (y * y).sum()
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 first, second = ctx.saved_tensors
                 return grad_output * 2 * torch.cat([first, second])
 
@@ -863,6 +916,7 @@ blk::span: 12 B
         if not IS_COMPILE_TEST:
             self.assertEqual(2, Producer.runs)
         # d/dx sum((3x)^2) = 18x
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0, 54.0, 72.0])))
 
     def test_save_op_saved_views_survive_retain_graph(self) -> None:
@@ -875,7 +929,9 @@ blk::span: 12 B
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -886,7 +942,9 @@ blk::span: 12 B
                 return (y * y).sum()
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 first, second = ctx.saved_tensors
                 return grad_output * 2 * torch.cat([first, second])
 
@@ -903,10 +961,12 @@ blk::span: 12 B
         expected = torch.tensor([18.0, 36.0, 54.0, 72.0])
 
         out.backward(retain_graph=True)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, expected))
 
         x.grad = None
         out.backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, expected))
 
     def test_save_op_saved_view_of_noncontiguous_input_is_ferried(self) -> None:
@@ -929,7 +989,9 @@ blk::span: 12 B
                 return (x * 3).t()  # non-contiguous output
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return (grad_output * 3).t()
 
@@ -944,7 +1006,9 @@ blk::span: 12 B
                 return (y * y).sum()
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 row0, row1 = ctx.saved_tensors
                 return grad_output * 2 * torch.stack([row0, row1])
 
@@ -972,6 +1036,7 @@ blk::span: 12 B
         out.backward()
         if not IS_COMPILE_TEST:
             self.assertEqual(2, Producer.runs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(reference, base)))
 
     @pytest.mark.compile_xfail("compile has no Python replay whose layout can drift")
@@ -990,7 +1055,9 @@ blk::span: 12 B
                 return x * 3  # contiguous on the original forward
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -1001,7 +1068,9 @@ blk::span: 12 B
                 return (y * y).sum()
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (head,) = ctx.saved_tensors
                 return grad_output * 2 * torch.cat([head, head])
 
@@ -1039,7 +1108,9 @@ blk::span: 12 B
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * 2 * x
 
@@ -1062,6 +1133,7 @@ blk::span: 12 B
         self.assertEqual(1, inner_forward_runs[0])
         # d/dx ((3x)^2 + 1) = 18x
         self.assertTrue(
+            # pyrefly: ignore[bad-argument-type]
             torch.allclose(x.grad, _ref_grad(lambda t: (t * 3) ** 2 + 1, base))
         )
 
@@ -1098,7 +1170,9 @@ blk::span: 12 B
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -1116,4 +1190,5 @@ blk::span: 12 B
         self.assertEqual(1, len(captured))
         self.assertTrue(torch.equal(captured[0], torch.tensor([2.0, 2.0])))
         # End-to-end gradient is still correct: d(sum(2 * 3x))/dx = 6.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([6.0, 6.0])))

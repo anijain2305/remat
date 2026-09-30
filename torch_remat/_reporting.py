@@ -499,7 +499,7 @@ def _addressed_intervals(tensor: torch.Tensor) -> list[tuple[int, int]]:
     if any(size == 0 for size in sizes):
         return []
     element_size = tensor.element_size()
-    base = tensor.storage_offset()
+    base = int(tensor.storage_offset())
 
     run = 1
     expected = 1

@@ -22,7 +22,7 @@ import expecttest
 import pytest
 import torch
 import torch_remat as remat
-from remat_test_helpers import (
+from remat_test_helpers import (  # pyrefly: ignore[missing-import]
     _ref_grad,
     assert_reclaimed_without_gc,
     checkpoint_for_test,
@@ -52,7 +52,9 @@ def _make_exp_save_op(saves: str) -> type[torch.autograd.Function]:
             return out
 
         @staticmethod
-        def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+        def backward(  # pyrefly: ignore[bad-override]
+            ctx: Any, grad_output: torch.Tensor
+        ) -> torch.Tensor:
             (saved,) = ctx.saved_tensors
             factor = saved.exp() if ctx.saves == "input" else saved
             return grad_output * factor
@@ -73,7 +75,9 @@ def _make_recompute_doubler() -> type[torch.autograd.Function]:
             return x * 2
 
         @staticmethod
-        def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+        def backward(  # pyrefly: ignore[bad-override]
+            ctx: Any, grad_output: torch.Tensor
+        ) -> torch.Tensor:
             del ctx
             return grad_output * 2
 
@@ -98,7 +102,7 @@ def _make_taxonomy_op() -> type[torch.autograd.Function]:
             return out, aux
 
         @staticmethod
-        def backward(
+        def backward(  # pyrefly: ignore[bad-override]
             ctx: Any, grad_out: torch.Tensor, grad_aux: torch.Tensor
         ) -> torch.Tensor:
             (internal, w) = ctx.saved_tensors
@@ -137,7 +141,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (saved_activation,) = ctx.saved_tensors
                 del saved_activation
                 return grad_output * 2
@@ -159,6 +165,7 @@ class LifetimeTest(expecttest.TestCase):
         self.assertIsNone(saved_ref())
 
         y.sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0, 2.0])))
 
     def test_save_output_for_backward_freed_without_gc(self) -> None:
@@ -182,7 +189,9 @@ class LifetimeTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y,) = ctx.saved_tensors
                 del y
                 return grad_output * 2
@@ -231,7 +240,9 @@ class LifetimeTest(expecttest.TestCase):
                     return y
 
                 @staticmethod
-                def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+                def backward(  # pyrefly: ignore[bad-override]
+                    ctx: Any, grad_output: torch.Tensor
+                ) -> torch.Tensor:
                     (y,) = ctx.saved_tensors
                     del y
                     return grad_output * 2
@@ -241,6 +252,7 @@ class LifetimeTest(expecttest.TestCase):
                     SavesOwnOutput.apply, "saves.own.output", recompute=False
                 )(x)
 
+            # pyrefly: ignore[bad-argument-type]
             with remat.saved_tensors_hooks(lambda t: t, lambda t: t):
                 y = checkpoint_for_test()(region)(
                     torch.tensor([1.0, 2.0], requires_grad=True)
@@ -275,7 +287,9 @@ class LifetimeTest(expecttest.TestCase):
                     return y
 
                 @staticmethod
-                def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+                def backward(  # pyrefly: ignore[bad-override]
+                    ctx: Any, grad_output: torch.Tensor
+                ) -> torch.Tensor:
                     (y,) = ctx.saved_tensors
                     del y
                     return grad_output * 2
@@ -311,7 +325,9 @@ class LifetimeTest(expecttest.TestCase):
                 return y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -331,7 +347,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x.sum()
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (x,) = ctx.saved_tensors
                 return grad_output * torch.ones_like(x)
 
@@ -355,6 +373,7 @@ class LifetimeTest(expecttest.TestCase):
         y.backward()
 
         self.assertEqual(2, Producer.runs)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([3.0, 3.0])))
 
     @pytest.mark.compile_xfail(
@@ -377,7 +396,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -397,7 +418,9 @@ class LifetimeTest(expecttest.TestCase):
                 return y * y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y,) = ctx.saved_tensors
                 return grad_output * 2 * y
 
@@ -425,6 +448,7 @@ class LifetimeTest(expecttest.TestCase):
         out.sum().backward()
         self.assertEqual(2, Producer.runs)  # recomputed once at backward
         # d/dx (3x)^2 = 18x
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
 
     def test_save_to_save_input_lives_on_autograd(self) -> None:
@@ -439,7 +463,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -450,7 +476,9 @@ class LifetimeTest(expecttest.TestCase):
                 return y * y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y,) = ctx.saved_tensors
                 return grad_output * 2 * y
 
@@ -481,6 +509,7 @@ class LifetimeTest(expecttest.TestCase):
         out = checkpoint_for_test(region_name="r")(consumes_save)(x)
         out.sum().backward()
         # d/dx (3x)^2 = 18x
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
 
     def test_recompute_consumers_share_one_producer_durable_output(self) -> None:
@@ -496,7 +525,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 3
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 3
 
@@ -531,6 +562,7 @@ class LifetimeTest(expecttest.TestCase):
         x = torch.tensor([1.0, 2.0], requires_grad=True)
         out = checkpoint_for_test(region_name="r")(region)(x)
         out.sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 18.0])))
 
     def test_save_op_saved_tensors_live_on_autograd_not_tape(self) -> None:
@@ -548,7 +580,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (saved,) = ctx.saved_tensors
                 return grad_output * 2 * (saved - 1)
 
@@ -578,6 +612,7 @@ class LifetimeTest(expecttest.TestCase):
         # Freed by autograd after a normal (non-retain_graph) backward even while
         # the consumed graph's output (and therefore its grad_fn) remains reachable.
         self.assertIsNone(resident_ref())
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 6.0])))
 
     @pytest.mark.compile_xfail(
@@ -600,7 +635,7 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 2, x * 3  # second output is an unused auxiliary
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any, grad_main: torch.Tensor, grad_aux: torch.Tensor
             ) -> torch.Tensor:
                 del ctx, grad_aux
@@ -623,6 +658,7 @@ class LifetimeTest(expecttest.TestCase):
         self.assertIsNone(ref())
 
         out.sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.full((1024,), 2.0)))
 
     @pytest.mark.compile_xfail("compiled regions do not expose eager tensor lifetimes")
@@ -647,7 +683,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (grad_factor,) = ctx.saved_tensors
                 return grad_output * grad_factor
 
@@ -661,7 +699,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * x
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (grad_factor,) = ctx.saved_tensors
                 return grad_output * grad_factor
 
@@ -691,6 +731,7 @@ class LifetimeTest(expecttest.TestCase):
         self.assertEqual(2, Stage0.runs)
         self.assertEqual(2, Stage1.runs)
         # d/dx sum(x**4) = 4 * x**3
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([4.0, 32.0])))
 
     @pytest.mark.compile_xfail("compiled regions do not expose eager tensor lifetimes")
@@ -715,7 +756,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 2
 
@@ -726,7 +769,9 @@ class LifetimeTest(expecttest.TestCase):
                 return h * h
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (h,) = ctx.saved_tensors
                 return grad_output * 2 * h
 
@@ -737,7 +782,9 @@ class LifetimeTest(expecttest.TestCase):
                 return h * h * h
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (h,) = ctx.saved_tensors
                 return grad_output * 3 * h * h
 
@@ -769,6 +816,7 @@ class LifetimeTest(expecttest.TestCase):
         out.sum().backward()
         self.assertEqual(2, Producer.runs)  # recomputed at backward
         # out = (2x)**2 + (2x)**3 = 4x**2 + 8x**3; d/dx = 8x + 24x**2
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([32.0, 112.0])))
 
     @pytest.mark.compile_xfail("compiled regions do not expose eager tensor lifetimes")
@@ -790,7 +838,9 @@ class LifetimeTest(expecttest.TestCase):
                 return x * 2
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 return grad_output * 2
 
@@ -804,7 +854,9 @@ class LifetimeTest(expecttest.TestCase):
                 return y * y
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (y,) = ctx.saved_tensors
                 return grad_output * 2 * y
 
@@ -824,6 +876,7 @@ class LifetimeTest(expecttest.TestCase):
         out.sum().backward()
         self.assertEqual(2, BareProducer.runs)  # recomputed at backward
         # out = (2x)**2 = 4x**2; d/dx sum = 8x
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([8.0, 16.0])))
 
     def _check_retention_cell(
@@ -859,9 +912,12 @@ class LifetimeTest(expecttest.TestCase):
         out.sum().backward()
 
         # SAVE runs once (body skipped on recompute); RECOMPUTE runs twice.
+        # pyrefly: ignore[missing-attribute]
         self.assertEqual(2 if recompute_a else 1, a_op.runs)
+        # pyrefly: ignore[missing-attribute]
         self.assertEqual(2 if recompute_b else 1, b_op.runs)
         # Gradient matches the uncheckpointed reference in every cell.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(_exp_exp_times3, base)))
 
     @pytest.mark.compile_xfail("compiled regions do not expose eager tensor lifetimes")
@@ -916,11 +972,13 @@ class LifetimeTest(expecttest.TestCase):
         self.assertIsNone(aux_ref())  # a dead auxiliary output is freed
         if recompute_op:
             # A RECOMPUTE op frees its internal too (a SAVE op keeps it -- see below).
-            assert op.internal_ref is not None
-            self.assertIsNone(op.internal_ref())
+            assert op.internal_ref is not None  # pyrefly: ignore[missing-attribute]
+            self.assertIsNone(op.internal_ref())  # pyrefly: ignore[not-callable]
 
         out.sum().backward()
+        # pyrefly: ignore[missing-attribute]
         self.assertEqual(2, producer.runs)  # the producer reran to reproduce w
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(_twelve_t_squared, base)))
 
     @pytest.mark.compile_xfail("compiled regions do not expose eager tensor lifetimes")
@@ -965,7 +1023,9 @@ scope::op: 16 B
                 return value * value
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (value,) = ctx.saved_tensors
                 return grad_output * 2 * value
 
@@ -994,11 +1054,13 @@ scope::op: 16 B
 
         out.sum().backward(retain_graph=True)
         self.assertIsNone(saved_input.value)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
 
         x.grad = None
         out.sum().backward()
         self.assertIsNone(saved_input.value)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([18.0, 36.0])))
         self.assertEqual(3, producer_runs)
 
@@ -1013,7 +1075,9 @@ scope::op: 16 B
                 return value
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx
                 released_before_upstream.append(saved_input_refs[0]() is None)
                 return grad_output
@@ -1027,7 +1091,7 @@ scope::op: 16 B
                 return value * saved
 
             @staticmethod
-            def backward(
+            def backward(  # pyrefly: ignore[bad-override]
                 ctx: Any, grad_output: torch.Tensor
             ) -> tuple[torch.Tensor, None]:
                 (saved,) = ctx.saved_tensors
@@ -1057,6 +1121,7 @@ scope::op: 16 B
         out.sum().backward()
 
         self.assertEqual([True], released_before_upstream)
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([3.0, 6.0])))
 
     def test_rederived_saved_input_unread_by_failed_backward_dies_with_graph(
@@ -1071,7 +1136,9 @@ scope::op: 16 B
                 return value * value
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 del ctx, grad_output
                 raise RuntimeError("backward failed")
 
@@ -1105,7 +1172,9 @@ scope::op: 16 B
                 return value * value
 
             @staticmethod
-            def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+            def backward(  # pyrefly: ignore[bad-override]
+                ctx: Any, grad_output: torch.Tensor
+            ) -> torch.Tensor:
                 (value,) = ctx.saved_tensors
                 ctx.saved_tensors
                 return grad_output * 2 * value

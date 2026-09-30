@@ -169,7 +169,9 @@ class _Sq(torch.autograd.Function):
         return y
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         (y, gf) = ctx.saved_tensors
         del y
         return grad_output * gf
@@ -185,7 +187,9 @@ class _Scale(torch.autograd.Function):
         return s
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         (s,) = ctx.saved_tensors
         del s
         return grad_output + grad_output
@@ -205,7 +209,9 @@ class _SaveShared(torch.autograd.Function):
         return y
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> tuple[torch.Tensor, None]:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> tuple[torch.Tensor, None]:
         (y, shared) = ctx.saved_tensors
         del y, shared
         return grad_output, None
@@ -223,7 +229,9 @@ class _StdSave(torch.autograd.Function):
         return y
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         (y,) = ctx.saved_tensors
         return grad_output * y
 

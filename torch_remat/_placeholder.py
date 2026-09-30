@@ -177,4 +177,6 @@ def _placeholder_message_text(
 def _null_storage(nbytes: int, device: torch.device) -> torch.UntypedStorage:
     """Return a storage that declares ``nbytes`` but holds a null data pointer."""
 
-    return torch._C._construct_storage_from_data_pointer(0, device, nbytes)
+    return torch._C._construct_storage_from_data_pointer(  # pyrefly: ignore[bad-return]
+        0, device, nbytes
+    )

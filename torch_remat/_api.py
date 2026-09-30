@@ -1411,7 +1411,7 @@ def _rederive_saved_inputs(
         saved_input = recipe.packed_ref()
         if saved_input is None:
             continue
-        captured = leaves_by_path[recipe.path]
+        captured = cast(torch.Tensor, leaves_by_path[recipe.path])
         if _is_placeholder(captured):
             raise RuntimeError(
                 f"{_display_name(region_state, record.op_name)} (recompute=False) saved "
@@ -1493,7 +1493,7 @@ def _load_saved_outputs(
 
     if schema.container is None:
         return cast(torch.Tensor, outputs[0])
-    return rebuild_container(schema.container, outputs)
+    return cast(Output, rebuild_container(schema.container, outputs))
 
 
 def _load_output_slot(
@@ -1636,7 +1636,9 @@ class _MakeNonLeaf(torch.autograd.Function):
         return x.view_as(x)
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         del ctx, grad_output
         raise RuntimeError(
             "torch_remat internal error: _MakeNonLeaf.backward was invoked. This "

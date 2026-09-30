@@ -31,7 +31,7 @@ from collections.abc import Generator
 
 import pytest
 import torch
-from remat_test_helpers import IS_COMPILE_TEST
+from remat_test_helpers import IS_COMPILE_TEST  # pyrefly: ignore[missing-import]
 
 _PLACEHOLDER_PRIMITIVES: tuple[str, ...] = (
     "_construct_storage_from_data_pointer",
@@ -68,7 +68,7 @@ def pytest_runtest_makereport(
     item: pytest.Item, call: pytest.CallInfo[None]
 ) -> Generator[None, None, None]:
     outcome = yield
-    report = outcome.get_result()
+    report = outcome.get_result()  # pyrefly: ignore[missing-attribute]
     if (
         IS_COMPILE_TEST
         and call.when == "call"

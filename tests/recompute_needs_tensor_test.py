@@ -23,7 +23,10 @@ import expecttest
 import pytest
 import torch
 import torch_remat as remat
-from remat_test_helpers import _ref_grad, checkpoint_for_test
+from remat_test_helpers import (  # pyrefly: ignore[missing-import]
+    _ref_grad,
+    checkpoint_for_test,
+)
 
 
 def _recompute_error(
@@ -73,6 +76,7 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
         x = torch.tensor([1.0, -1.0], requires_grad=True)
         checkpoint_for_test()(body)(x).sum().backward()
         # d/dx relu(2x) = 2 where 2x > 0.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0, 0.0])))
 
     def test_recompute_needs_tensor_outside_a_region_is_a_noop(self) -> None:
@@ -90,6 +94,7 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
 
         x = torch.tensor([1.0, -1.0], requires_grad=True)
         checkpoint_for_test()(body)(x).sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0, 0.0])))
 
     def test_recompute_needs_tensor_on_one_of_two_outputs(self) -> None:
@@ -103,6 +108,7 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
         x = torch.tensor([1.0, 2.0], requires_grad=True)
         checkpoint_for_test()(body)(x).sum().backward()
         # Only a = 2x is used: d/dx relu(2x) = 2 (both positive); b unused -> grad 0.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0, 2.0])))
 
     def test_recompute_needs_tensor_persists_both_outputs(self) -> None:
@@ -115,6 +121,7 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
         x = torch.tensor([1.0, 2.0], requires_grad=True)
         checkpoint_for_test()(body)(x).sum().backward()
         # d/dx (relu(2x) + relu(3x)) = 2 + 3 = 5 (all positive).
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([5.0, 5.0])))
 
     def test_recompute_needs_tensor_on_bare_view_persists_the_base(self) -> None:
@@ -131,6 +138,7 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
 
         x = torch.tensor([1.0, -1.0], requires_grad=True)
         checkpoint_for_test()(body)(x).sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(reference, x)))
 
     def test_region_consuming_bare_view_of_save_output_works(self) -> None:
@@ -148,6 +156,7 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
         x = torch.tensor([1.0, 2.0], requires_grad=True)
         checkpoint_for_test(region_name="r")(body)(x).sum().backward()
         # d/dx (2x * 3) = 6.
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(reference, x)))
 
     def test_recompute_needs_tensor_is_a_noop_with_recompute_true(self) -> None:
@@ -161,4 +170,5 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
 
         x = torch.tensor([1.0, -1.0], requires_grad=True)
         checkpoint_for_test()(body)(x).sum().backward()
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, torch.tensor([2.0, 0.0])))

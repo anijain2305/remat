@@ -153,7 +153,9 @@ class _WedgeSq(torch.autograd.Function):
         return y
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         (grad_factor,) = ctx.saved_tensors
         return grad_output * grad_factor
 
@@ -170,7 +172,9 @@ class _WedgeRelu(torch.autograd.Function):
         return torch.relu(x)
 
     @staticmethod
-    def backward(ctx: Any, grad_output: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, grad_output: torch.Tensor
+    ) -> torch.Tensor:
         (mask,) = ctx.saved_tensors
         return grad_output * mask
 

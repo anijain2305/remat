@@ -14,7 +14,7 @@ from __future__ import annotations
 
 import expecttest
 import torch
-from remat_test_helpers import assert_placeholder
+from remat_test_helpers import assert_placeholder  # pyrefly: ignore[missing-import]
 from torch_remat._placeholder import (
     _make_placeholder_tensor,
     _TensorMetadata,

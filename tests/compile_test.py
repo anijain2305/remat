@@ -50,7 +50,9 @@ class _ExpFn(torch.autograd.Function):
         return e
 
     @staticmethod
-    def backward(ctx: Any, g: torch.Tensor) -> torch.Tensor:
+    def backward(  # pyrefly: ignore[bad-override]
+        ctx: Any, g: torch.Tensor
+    ) -> torch.Tensor:
         (e,) = ctx.saved_tensors
         return g * e
 
@@ -163,7 +165,9 @@ class CompileTest(expecttest.TestCase):
             return aot_module_simplified(
                 gm,
                 example_inputs,
+                # pyrefly: ignore[bad-argument-type]
                 fw_compiler=fw,
+                # pyrefly: ignore[bad-argument-type]
                 bw_compiler=bw,
                 partition_fn=min_cut_rematerialization_partition,
             )
@@ -256,6 +260,7 @@ class CompileTest(expecttest.TestCase):
         output = compiled(x)
         output.sum().backward()
         self.assertTrue(torch.equal(output, expected))
+        # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.equal(x.grad, expected))
 
     def test_unsupported_checkpoint_options_raise(self) -> None:
