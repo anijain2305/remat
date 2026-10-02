@@ -1291,6 +1291,20 @@ def _merge_persist(
     return merged
 
 
+@contextlib.contextmanager
+def _no_torch_function_modes() -> Iterator[None]:
+    """Run without the active torch function modes; tensor subclass dispatch is kept."""
+
+    modes = torch.overrides._get_current_function_mode_stack()
+    for _ in modes:
+        torch.overrides._pop_mode()
+    try:
+        yield
+    finally:
+        for mode in modes:
+            torch.overrides._push_mode(mode)
+
+
 @dataclass
 class _PersistOutputThunk:
     """Callable that records one SAVE output on the tape, once (producer responsibility).
@@ -1330,7 +1344,11 @@ class _PersistOutputThunk:
         real = self.output_ref()
         if real is None:
             return
-        detached = real.detach()
+        # The consumer that fires this may run under torch function modes the producer
+        # did not (e.g. a mode that types tensors per scope). This detach only snapshots
+        # the value for replay, so keep it out of those modes.
+        with _no_torch_function_modes():
+            detached = real.detach()
         if self.hooks is not None:
             # Bind the matching unpack hook to the slot so replay reloads via the pair
             # that packed it, not whatever hooks are active at load time. Pack against the
