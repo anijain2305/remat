@@ -159,6 +159,47 @@ To fix it, call remat.recompute_needs_tensor(t) on the output tensor, right befo
         # pyrefly: ignore[bad-argument-type]
         self.assertTrue(torch.allclose(x.grad, _ref_grad(reference, x)))
 
+    def test_persist_from_consumer_runs_outside_torch_function_modes(self) -> None:
+        # The consumer that persists a SAVE output can run under a torch function mode
+        # the producer did not, e.g. a mode that types tensors per scope and rejects
+        # this output in the consumer's scope. Persisting only snapshots the value for
+        # replay, so the mode must not see that detach, and must stay active after it.
+        class RejectsDetach(torch.overrides.TorchFunctionMode):
+            def __torch_function__(  # pyre-ignore[3]
+                self,
+                func: Callable[..., object],
+                types: object,
+                args: tuple[object, ...] = (),
+                kwargs: dict[str, object] | None = None,
+            ) -> object:
+                if func is torch.Tensor.detach:
+                    raise AssertionError("persist ran detach under a user mode")
+                return func(*args, **(kwargs or {}))
+
+        modes_after_consumer: list[list[object]] = []
+
+        def body(x: torch.Tensor) -> torch.Tensor:
+            y = remat.region(lambda t: t * 2, "mul", recompute=False)(x)
+            v = y.reshape(-1)  # bare view of the SAVE output
+            with RejectsDetach():
+                out = remat.region(torch.mul, "consume", recompute=True)(v, 3.0)
+                if not remat.is_recomputing():
+                    modes_after_consumer.append(
+                        torch.overrides._get_current_function_mode_stack()
+                    )
+            return out
+
+        def reference(x: torch.Tensor) -> torch.Tensor:
+            return (x * 2).reshape(-1) * 3.0
+
+        x = torch.tensor([1.0, 2.0], requires_grad=True)
+        checkpoint_for_test(region_name="r")(body)(x).sum().backward()
+        self.assertEqual(len(modes_after_consumer), 1)
+        self.assertEqual(len(modes_after_consumer[0]), 1)
+        self.assertIsInstance(modes_after_consumer[0][0], RejectsDetach)
+        # pyrefly: ignore[bad-argument-type]
+        self.assertTrue(torch.allclose(x.grad, _ref_grad(reference, x)))
+
     def test_recompute_needs_tensor_is_a_noop_with_recompute_true(self) -> None:
         # A recompute=True region reruns during recompute, so its output is always real --
         # recompute_needs_tensor on it is harmless, letting a config-driven call site invoke
